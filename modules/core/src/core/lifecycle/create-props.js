@@ -2,8 +2,6 @@ import {applyPropOverrides} from '../lib/seer-integration';
 import log from '../utils/log';
 import {parsePropTypes} from './prop-types';
 
-export const EMPTY_ARRAY = Object.freeze([]);
-
 // Create a property object
 export function createProps() {
   const layer = this; // eslint-disable-line
@@ -14,10 +12,17 @@ export function createProps() {
   // Create a new prop object with  default props object in prototype chain
   const newProps = Object.create(defaultProps, {
     _layer: {
+      // Back pointer to the owning layer
       enumerable: false,
       value: layer
     },
-    _asyncProps: {
+    // The "input" (i.e. supplied / original) values for async props
+    // Note: the actual (i.e. resolved) values are looked up from layer state
+    _asyncPropValues: {
+      enumerable: false,
+      value: {}
+    },
+    _nonAsyncPropValues: {
       enumerable: false,
       value: {}
     }
@@ -27,7 +32,6 @@ export function createProps() {
   for (let i = 0; i < arguments.length; ++i) {
     Object.assign(newProps, arguments[i]);
   }
-  newProps.data = newProps.data || EMPTY_ARRAY;
 
   // SEER: Apply any overrides from the seer debug extension if it is active
   applyPropOverrides(newProps);
@@ -92,7 +96,7 @@ function buildPropDefs(layerClass) {
 
   // Create any necessary property descriptors and create the default prop object
   // Assign merged default props
-  const defaultProps = buildDefaultProps(
+  const defaultProps = buildDefaultPropsObject(
     layerPropDefs.defaultProps,
     parentPropDefs && parentPropDefs.defaultProps,
     propTypes,
@@ -106,17 +110,18 @@ function buildPropDefs(layerClass) {
   return {propTypes, defaultProps};
 }
 
-function buildDefaultProps(props, parentProps, propTypes, layerClass) {
+// Builds a pre-merged default props object that layer props can inherit from
+function buildDefaultPropsObject(props, parentProps, propTypes, layerClass) {
   const defaultProps = Object.create(null);
 
   Object.assign(defaultProps, parentProps, props);
 
-  const descriptors = {};
-
+  // Avoid freezing `id` prop
   const id = getLayerName(layerClass);
   delete props.id;
 
-  Object.assign(descriptors, {
+  // Add getters/setters for async prop properties
+  Object.defineProperties(defaultProps, {
     id: {
       configurable: false,
       writable: true,
@@ -124,7 +129,72 @@ function buildDefaultProps(props, parentProps, propTypes, layerClass) {
     }
   });
 
-  Object.defineProperties(defaultProps, descriptors);
+  // Add getters/setters for async prop properties
+  addAsyncPropDescriptors(defaultProps, propTypes);
 
   return defaultProps;
+}
+
+// Create descriptors for overridable props
+function addAsyncPropDescriptors(defaultProps, propTypes) {
+  const defaultValues = {};
+
+  const descriptors = {
+    // Default "resolved" values for async props, returned if value not yet resolved/set.
+    _asyncPropDefaultValues: {
+      enumerable: false,
+      value: defaultValues
+    },
+    // TODO - Shadowed object, just to allow indexing
+    _asyncPropValues: {
+      enumerable: false,
+      value: {}
+    }
+  };
+
+  // Move async props into shadow values
+  for (const propType of Object.values(propTypes)) {
+    const {name, value} = propType;
+    if (propType.async) {
+      defaultValues[propType.name] = value;
+      Object.assign(descriptors, {
+        [name]: getDescriptorForAsyncProp(name, value)
+      });
+    }
+  }
+
+  Object.defineProperties(defaultProps, descriptors);
+}
+
+// Helper: Configures getter and setter for one async prop
+function getDescriptorForAsyncProp(name) {
+  return {
+    configurable: false,
+    // Save the provided value for async props in a special map
+    set(newValue) {
+      if (typeof newValue === 'string' || newValue instanceof Promise) {
+        this._asyncPropValues[name] = newValue;
+      } else {
+        this._nonAsyncPropValues[name] = newValue;
+      }
+    },
+    // Only the layer's state knows the true value of async prop
+    get() {
+      if (this._nonAsyncPropValues) {
+        // Prop value isn't async, so just return it
+        if (name in this._nonAsyncPropValues) {
+          const value = this._nonAsyncPropValues[name];
+          // TODO - data expects null to be replaced with `[]`
+          return value ? value : this._asyncPropDefaultValues[name];
+        }
+        // It's an async prop value: look into layer state
+        const state = this._layer && this._layer.internalState;
+        if (state && state.hasAsyncProp(name)) {
+          return state.getAsyncProp(name);
+        }
+      }
+      // layer not yet initialized/matched, return the layer's default value for the prop
+      return this._asyncPropDefaultValues[name];
+    }
+  };
 }
