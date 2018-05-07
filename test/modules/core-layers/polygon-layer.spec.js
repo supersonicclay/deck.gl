@@ -36,9 +36,6 @@ test('PolygonLayer#constructor', t => {
         props: {
           data,
           getPolygon: f => f
-        },
-        assert() {
-          debugger
         }
       },
       {

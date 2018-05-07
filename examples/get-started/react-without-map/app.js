@@ -23,9 +23,9 @@ class Root extends Component {
       data: null
     };
 
-    // fetch(GEOJSON)
-    //   .then(resp => resp.json())
-    //   .then(data => this.setState({data}));
+    fetch(GEOJSON)
+      .then(resp => resp.json())
+      .then(data => this.setState({data}));
   }
 
   render() {
@@ -39,7 +39,7 @@ class Root extends Component {
         initialViewState={INITIAL_VIEW_STATE}
         layers={[
           new GeoJsonLayer({
-            data: GEOJSON,
+            data,
             stroked: true,
             filled: true,
             lineWidthMinPixels: 2,

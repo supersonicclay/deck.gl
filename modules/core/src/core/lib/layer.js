@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 /* global window */
-/* global fetch */
 import {COORDINATE_SYSTEM} from './constants';
 import AttributeManager from './attribute-manager';
 import {removeLayerInSeer} from './seer-integration';
@@ -42,8 +41,6 @@ const defaultProps = {
   // data: Special handling for null, see below
   data: {type: 'data', value: EMPTY_ARRAY, async: true},
   dataComparator: null,
-  dataTransform: data => data,
-  fetch: url => fetch(url).then(response => response.json()),
   updateTriggers: {}, // Update triggers: a core change detection mechanism in deck.gl
   numInstances: undefined,
 
@@ -71,7 +68,7 @@ const defaultProps = {
   // Selection/Highlighting
   highlightedObjectIndex: null,
   autoHighlight: false,
-  highlightColor: {type: 'color', value: [0, 0, 128, 128]}
+  highlightColor: [0, 0, 128, 128]
 };
 
 let counter = 0;
@@ -623,10 +620,6 @@ export default class Layer {
     changeFlags.propsOrDataChanged = changeFlags.propsOrDataChanged || propsOrDataChanged;
     changeFlags.somethingChanged =
       changeFlags.somethingChanged || propsOrDataChanged || flags.viewportChanged;
-
-    if (propsOrDataChanged) {
-      this.context.layerManager.setNeedsUpdate(String(this));
-    }
   }
   /* eslint-enable complexity */
 
@@ -658,7 +651,6 @@ ${flags.viewportChanged ? 'viewport' : ''}\
   // Compares the layers props with old props from a matched older layer
   // and extracts change flags that describe what has change so that state
   // can be update correctly with minimal effort
-  // TODO - arguments for testing only
   diffProps(newProps, oldProps) {
     const changeFlags = diffProps(newProps, oldProps);
 
@@ -671,43 +663,8 @@ ${flags.viewportChanged ? 'viewport' : ''}\
       }
     }
 
-    // if (changeFlags.dataChanged) {
-    //   if (this._loadData()) {
-    //     // Postpone data changed flag until loaded
-    //     changeFlags.dataChanged = false;
-    //   }
-    // }
-
     return this.setChangeFlags(changeFlags);
   }
-
-  // _loadData() {
-  //   const {data, fetch} = this.props;
-  //   switch (typeof data) {
-  //     case 'string':
-  //       const url = data;
-  //       if (url !== this.internalState.lastUrl) {
-  //         // Make sure pros.data returns an Array, not a string
-
-  //         this.internalState.data = this.internalState.data || [];
-  //         this.internalState.lastUrl = url;
-
-  //         // Load the data
-  //         const promise = fetch(url).then(loadedData => {
-  //           this.internalState.data = loadedData;
-  //           this.setChangeFlags({dataChanged: true});
-  //         });
-
-  //         this.internalState.loadPromise = promise;
-  //         return true;
-  //       }
-  //       break;
-  //     default:
-  //       // Makes getData() return props.data
-  //       this.internalState.data = null;
-  //   }
-  //   return false;
-  // }
 
   // PRIVATE METHODS
 
