@@ -729,9 +729,6 @@ ${flags.viewportChanged ? 'viewport' : ''}\
       layer: this
     });
 
-    // Ensure any async props are updated
-    this.internalState.updateAsyncProps(this.props);
-
     this.state = {};
     // TODO deprecated, for backwards compatibility with older layers
     this.state.attributeManager = this.getAttributeManager();
@@ -761,7 +758,6 @@ ${flags.viewportChanged ? 'viewport' : ''}\
       model.userData.layer = this;
     }
 
-    this.internalState.updateAsyncProps(this.props);
     this.diffProps(this.props, props);
   }
 
