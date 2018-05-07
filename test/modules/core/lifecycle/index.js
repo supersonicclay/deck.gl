@@ -20,4 +20,3 @@
 
 import './props.spec';
 import './prop-types.spec';
-import './prop-overrides.spec';

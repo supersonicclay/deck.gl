@@ -506,7 +506,6 @@ export default class Layer {
   }
   /* eslint-enable max-statements */
 
-
   // Common code for _initialize and _update
   _updateState() {
     const updateParams = this._getUpdateParams();
