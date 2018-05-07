@@ -11,18 +11,20 @@ export function createProps() {
 
   // Create a new prop object with  default props object in prototype chain
   const newProps = Object.create(defaultProps, {
+    // Props need a back pointer to the owning layer
     _layer: {
-      // Back pointer to the owning layer
       enumerable: false,
       value: layer
     },
-    // The "input" (i.e. supplied / original) values for async props
-    // Note: the actual (i.e. resolved) values are looked up from layer state
-    _asyncPropValues: {
+    // The supplied (original) values for those async props that are set to url strings or Promises.
+    // In this case, the actual (i.e. resolved) values are looked up from layer.internalState
+    _asyncPropUrls: {
       enumerable: false,
       value: {}
     },
-    _nonAsyncPropValues: {
+    // Note: the actual (i.e. resolved) values for props that are NOT set to urls or Promises.
+    // in this case the values are served directly from this map
+    _asyncPropValues: {
       enumerable: false,
       value: {}
     }
@@ -146,7 +148,7 @@ function addAsyncPropDescriptors(defaultProps, propTypes) {
       value: defaultValues
     },
     // TODO - Shadowed object, just to allow indexing
-    _asyncPropValues: {
+    _asyncPropUrls: {
       enumerable: false,
       value: {}
     }
@@ -173,25 +175,26 @@ function getDescriptorForAsyncProp(name) {
     // Save the provided value for async props in a special map
     set(newValue) {
       if (typeof newValue === 'string' || newValue instanceof Promise) {
-        this._asyncPropValues[name] = newValue;
+        this._asyncPropUrls[name] = newValue;
       } else {
-        this._nonAsyncPropValues[name] = newValue;
+        this._asyncPropValues[name] = newValue;
       }
     },
     // Only the layer's state knows the true value of async prop
     get() {
-      if (this._nonAsyncPropValues) {
+      if (this._asyncPropValues) {
         // Prop value isn't async, so just return it
-        if (name in this._nonAsyncPropValues) {
-          const value = this._nonAsyncPropValues[name];
+        if (name in this._asyncPropValues) {
+          const value = this._asyncPropValues[name];
           // TODO - data expects null to be replaced with `[]`
           return value ? value : this._asyncPropDefaultValues[name];
         }
         // It's an async prop value: look into layer state
-        const state = this._layer && this._layer.internalState;
-        if (state && state.hasAsyncProp(name)) {
-          return state.getAsyncProp(name);
-        }
+        // TODO - will be uncommented in next PR
+        // const state = this._layer && this._layer.internalState;
+        // if (state && state.hasAsyncProp(name)) {
+        //   return state.getAsyncProp(name);
+        // }
       }
       // layer not yet initialized/matched, return the layer's default value for the prop
       return this._asyncPropDefaultValues[name];
