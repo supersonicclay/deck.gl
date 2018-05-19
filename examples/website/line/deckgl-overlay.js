@@ -1,6 +1,11 @@
 import React, {Component} from 'react';
-import {setParameters} from 'luma.gl';
+import {GL} from 'luma.gl';
 import DeckGL, {LineLayer, ScatterplotLayer} from 'deck.gl';
+
+const WEBGL_PARAMETERS = {
+  blendFunc: [GL.SRC_ALPHA, GL.ONE, GL.ONE_MINUS_DST_ALPHA, GL.ONE],
+  blendEquation: GL.FUNC_ADD
+};
 
 function getColor(d) {
   const z = d.start[2];
@@ -29,13 +34,6 @@ export default class DeckGLOverlay extends Component {
       pitch: 50,
       bearing: 0
     };
-  }
-
-  _initialize(gl) {
-    setParameters(gl, {
-      blendFunc: [gl.SRC_ALPHA, gl.ONE, gl.ONE_MINUS_DST_ALPHA, gl.ONE],
-      blendEquation: gl.FUNC_ADD
-    });
   }
 
   render() {
@@ -69,6 +67,6 @@ export default class DeckGLOverlay extends Component {
       })
     ];
 
-    return <DeckGL {...viewport} layers={layers} onWebGLInitialized={this._initialize} />;
+    return <DeckGL {...viewport} layers={layers} parameters={WEBGL_PARAMETERS} />;
   }
 }

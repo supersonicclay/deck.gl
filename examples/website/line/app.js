@@ -28,11 +28,11 @@ class Root extends Component {
       airports: null
     };
 
-    fetch(DATA_URL)
+    fetch(DATA_URL.FLIGHT_PATHS)
       .then(resp => resp.json())
       .then(data => this.setState({flightPaths: data}));
 
-    fetch(DATA_URL)
+    fetch(DATA_URL.AIRPORTS)
       .then(resp => resp.json())
       .then(data => this.setState({airports: data}));
   }
