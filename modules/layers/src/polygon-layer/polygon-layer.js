@@ -85,7 +85,9 @@ export default class PolygonLayer extends CompositeLayer {
     }
   }
 
-  getPickingInfo({info}) {
+  getPickingInfo({info, mode}) {
+    // eslint-disable-next-line no-console, no-undef
+    console.log('polygon layer picking info', mode, info.object, info);
     return Object.assign(info, {
       // override object with picked data
       object: (info.object && info.object.object) || info.object

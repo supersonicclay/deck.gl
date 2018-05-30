@@ -53,6 +53,8 @@ const defaultProps = {
 
   onHover: noop,
   onClick: noop,
+  onPointerDown: noop,
+  onPointerUp: noop,
 
   coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
   coordinateOrigin: [0, 0, 0],

@@ -394,6 +394,12 @@ function callLayerPickingCallbacks(infos, mode) {
       case 'hover':
         handled = info.layer.props.onHover(info);
         break;
+      case 'pointerdown':
+        handled = info.layer.props.onPointerDown(info);
+        break;
+      case 'pointerup':
+        handled = info.layer.props.onPointerUp(info);
+        break;
       case 'query':
         break;
       default:

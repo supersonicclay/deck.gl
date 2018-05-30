@@ -109,9 +109,13 @@ export default class LayerManager {
     this._eventManager = null;
     this._onLayerClick = null;
     this._onLayerHover = null;
+    this._onLayerPointerDown = null;
+    this._onLayerPointerUp = null;
     this._onClick = this._onClick.bind(this);
     this._onPointerMove = this._onPointerMove.bind(this);
     this._onPointerLeave = this._onPointerLeave.bind(this);
+    this._onPointerDown = this._onPointerDown.bind(this);
+    this._onPointerUp = this._onPointerUp.bind(this);
     this._pickAndCallback = this._pickAndCallback.bind(this);
 
     // Seer integration
@@ -196,7 +200,13 @@ export default class LayerManager {
       this._initEventHandling(props.eventManager);
     }
 
-    if ('pickingRadius' in props || 'onLayerClick' in props || 'onLayerHover' in props) {
+    if (
+      'pickingRadius' in props ||
+      'onLayerClick' in props ||
+      'onLayerHover' in props ||
+      'onLayerPointerDown' in props ||
+      'onLayerPointerUp' in props
+    ) {
       this._setEventHandlingParameters(props);
     }
 
@@ -440,12 +450,20 @@ export default class LayerManager {
     this._eventManager.on({
       click: this._onClick,
       pointermove: this._onPointerMove,
-      pointerleave: this._onPointerLeave
+      pointerleave: this._onPointerLeave,
+      pointerdown: this._onPointerDown,
+      pointerup: this._onPointerUp
     });
   }
 
   // Set parameters for input event handling.
-  _setEventHandlingParameters({pickingRadius, onLayerClick, onLayerHover}) {
+  _setEventHandlingParameters({
+    pickingRadius,
+    onLayerClick,
+    onLayerHover,
+    onLayerPointerDown,
+    onLayerPointerUp
+  }) {
     if (!isNaN(pickingRadius)) {
       this._pickingRadius = pickingRadius;
     }
@@ -454,6 +472,12 @@ export default class LayerManager {
     }
     if (typeof onLayerHover !== 'undefined') {
       this._onLayerHover = onLayerHover;
+    }
+    if (typeof onLayerPointerDown !== 'undefined') {
+      this._onLayerPointerDown = onLayerPointerDown;
+    }
+    if (typeof onLayerPointerUp !== 'undefined') {
+      this._onLayerPointerUp = onLayerPointerUp;
     }
     this._validateEventHandling();
   }
@@ -730,6 +754,30 @@ export default class LayerManager {
       y: -1,
       radius: this._pickingRadius,
       mode: 'hover'
+    });
+  }
+
+  _onPointerDown(event) {
+    if (event.rightButton) {
+      // Do not trigger onHover callbacks if mouse button is down.
+      return;
+    }
+    this._pickAndCallback({
+      callback: this._onLayerPointerDown,
+      event,
+      mode: 'pointerdown'
+    });
+  }
+
+  _onPointerUp(event) {
+    if (event.rightButton) {
+      // Do not trigger onHover callbacks if mouse button is down.
+      return;
+    }
+    this._pickAndCallback({
+      callback: this._onLayerPointerUp,
+      event,
+      mode: 'pointerup'
     });
   }
 

@@ -288,6 +288,8 @@ export default class App extends PureComponent {
           pickingRadius={pickingRadius}
           onLayerHover={this._onHover}
           onLayerClick={this._onClick}
+          onLayerPointerDown={event => console.log('on layer pointer down', event)}
+          onLayerPointerUp={event => console.log('on layer pointer up', event)}
           useDevicePixels={useDevicePixels}
           debug={false}
           drawPickingColors={drawPickingColors}
